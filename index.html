@@ -3,407 +3,116 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI token 計算機</title>
-<meta name="description" content="三步驟估算使用 AI 的費用，支援 OpenAI、Anthropic Claude、Google Gemini 多個模型比較">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
+<title>AI 費用估算工具 / AI Cost Estimator</title>
+<meta name="description" content="三步驟估算使用 AI 的費用 / Estimate your AI costs in 3 steps">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg-secondary: #f5f5f3; --bg-info: #e6f1fb;
+  --bg-success: #eaf3de; --bg-warning: #faeeda;
+  --text: #1a1a1a; --text-secondary: #6b6b69; --text-tertiary: #9a9a98;
+  --text-info: #0c447c; --text-success: #27500a; --text-warning: #633806;
+  --border: rgba(0,0,0,0.12); --border-md: rgba(0,0,0,0.22);
+  --border-info: #85b7eb; --border-success: #97c459;
+  --radius-md: 8px; --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg: #ffffff;
-    --bg-secondary: #f5f5f3;
-    --bg-info: #e6f1fb;
-    --bg-success: #eaf3de;
-    --bg-warning: #faeeda;
-    --text: #1a1a1a;
-    --text-secondary: #6b6b69;
-    --text-tertiary: #9a9a98;
-    --text-info: #0c447c;
-    --text-success: #27500a;
-    --text-warning: #633806;
-    --border: rgba(0,0,0,0.12);
-    --border-md: rgba(0,0,0,0.22);
-    --border-info: #85b7eb;
-    --border-success: #97c459;
-    --radius-md: 8px;
-    --radius-lg: 12px;
+    --bg: #1c1c1a; --bg-secondary: #252523; --bg-info: #0c447c;
+    --bg-success: #27500a; --bg-warning: #633806;
+    --text: #f0f0ee; --text-secondary: #a8a8a6; --text-tertiary: #6b6b69;
+    --text-info: #b5d4f4; --text-success: #c0dd97; --text-warning: #fac775;
+    --border: rgba(255,255,255,0.12); --border-md: rgba(255,255,255,0.22);
+    --border-info: #185fa5; --border-success: #3b6d11;
   }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1c1a;
-      --bg-secondary: #252523;
-      --bg-info: #0c447c;
-      --bg-success: #27500a;
-      --bg-warning: #633806;
-      --text: #f0f0ee;
-      --text-secondary: #a8a8a6;
-      --text-tertiary: #6b6b69;
-      --text-info: #b5d4f4;
-      --text-success: #c0dd97;
-      --text-warning: #fac775;
-      --border: rgba(255,255,255,0.12);
-      --border-md: rgba(255,255,255,0.22);
-      --border-info: #185fa5;
-      --border-success: #3b6d11;
-      --radius-md: 8px;
-      --radius-lg: 12px;
-    }
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg-secondary);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 2rem 1rem;
-  }
-
-  .page-wrap {
-    max-width: 680px;
-    margin: 0 auto;
-  }
-
-  .page-header {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  .page-header h1 {
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-
-  .page-header p {
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
-
-  .card {
-    background: var(--bg);
-    border-radius: var(--radius-lg);
-    border: 0.5px solid var(--border);
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .step-indicator {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 2rem;
-    align-items: center;
-  }
-
-  .step-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 500;
-    border: 0.5px solid var(--border-md);
-    color: var(--text-secondary);
-    background: transparent;
-    flex-shrink: 0;
-  }
-
-  .step-dot.active {
-    background: var(--bg-info);
-    color: var(--text-info);
-    border-color: var(--border-info);
-  }
-
-  .step-dot.done {
-    background: var(--bg-success);
-    color: var(--text-success);
-    border-color: var(--border-success);
-  }
-
-  .step-line {
-    flex: 1;
-    height: 0.5px;
-    background: var(--border);
-  }
-
-  .step-section { display: none; }
-  .step-section.visible { display: block; }
-
-  .q-title {
-    font-size: 18px;
-    font-weight: 500;
-    margin-bottom: 6px;
-    color: var(--text);
-  }
-
-  .q-sub {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: 1.5rem;
-  }
-
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
-    margin-bottom: 1.5rem;
-  }
-
-  .opt-card {
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px 14px 16px;
-    cursor: pointer;
-    background: var(--bg);
-    text-align: center;
-    transition: border-color 0.15s;
-  }
-
-  .opt-card:hover { border-color: var(--border-md); }
-
-  .opt-card.selected {
-    border: 2px solid var(--border-info);
-    background: var(--bg-info);
-  }
-
-  .opt-card.selected .opt-title,
-  .opt-card.selected .opt-desc,
-  .opt-card.selected .opt-icon { color: var(--text-info); }
-
-  .opt-icon {
-    font-size: 32px;
-    margin-bottom: 10px;
-    color: var(--text-secondary);
-    display: block;
-  }
-
-  .opt-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 5px;
-  }
-
-  .opt-desc {
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
-
-  .scale-block { margin-bottom: 20px; }
-
-  .scale-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 6px;
-  }
-
-  .scale-name { font-size: 13px; color: var(--text-secondary); }
-  .scale-val { font-size: 14px; font-weight: 500; color: var(--text); }
-
-  input[type=range] {
-    width: 100%;
-    height: 4px;
-    border-radius: 2px;
-    -webkit-appearance: none;
-    background: var(--border-md);
-    outline: none;
-    cursor: pointer;
-  }
-
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--text);
-    border: 2px solid var(--bg);
-    box-shadow: 0 0 0 1px var(--border-md);
-  }
-
-  .scale-ticks {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 5px;
-  }
-
-  .scale-tick {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    flex: 1;
-    text-align: center;
-  }
-
-  .scale-tick:first-child { text-align: left; }
-  .scale-tick:last-child { text-align: right; }
-
-  .seg-track {
-    display: flex;
-    border: 0.5px solid var(--border-md);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    background: var(--bg-secondary);
-    margin-bottom: 12px;
-  }
-
-  .seg-btn {
-    flex: 1;
-    padding: 12px 8px;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    border-right: 0.5px solid var(--border);
-    font-size: 13px;
-    color: var(--text-secondary);
-    text-align: center;
-    transition: background 0.15s;
-    font-family: inherit;
-  }
-
-  .seg-btn:last-child { border-right: none; }
-  .seg-btn:hover { background: var(--bg); }
-
-  .seg-btn.active {
-    background: var(--bg);
-    color: var(--text);
-    font-weight: 500;
-  }
-
-  .seg-icon { font-size: 18px; display: block; margin-bottom: 4px; }
-  .seg-title { display: block; font-size: 13px; font-weight: 500; }
-  .seg-sub { display: block; font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
-  .seg-btn.active .seg-sub { color: var(--text-secondary); }
-
-  .quality-desc {
-    min-height: 48px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    background: var(--bg-secondary);
-    margin-bottom: 1rem;
-  }
-
-  .metric-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 10px;
-    margin: 1.5rem 0;
-  }
-
-  .metric {
-    background: var(--bg-secondary);
-    border-radius: var(--radius-md);
-    padding: 14px 12px;
-  }
-
-  .metric-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
-  .metric-value { font-size: 22px; font-weight: 500; color: var(--text); }
-
-  .rec-card {
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1rem 1.25rem;
-    margin-bottom: 10px;
-    background: var(--bg);
-  }
-
-  .rec-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-  }
-
-  .rec-name { font-size: 15px; font-weight: 500; color: var(--text); }
-  .rec-provider { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-  .rec-price { font-size: 18px; font-weight: 500; color: var(--text); }
-  .rec-price-label { font-size: 11px; color: var(--text-secondary); }
-
-  .badge {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 99px;
-    display: inline-block;
-    margin-right: 4px;
-  }
-
-  .badge-best { background: var(--bg-success); color: var(--text-success); }
-  .badge-balanced { background: var(--bg-info); color: var(--text-info); }
-  .badge-quality { background: var(--bg-warning); color: var(--text-warning); }
-
-  .tip-box {
-    background: var(--bg-secondary);
-    border-radius: var(--radius-md);
-    padding: 12px 14px;
-    margin: 1rem 0;
-  }
-
-  .tip-title {
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: var(--text);
-  }
-
-  .tip-item { font-size: 13px; margin: 4px 0; color: var(--text-secondary); }
-
-  .warn-box {
-    background: var(--bg-warning);
-    border-radius: var(--radius-md);
-    padding: 12px 14px;
-    margin: 1rem 0;
-    font-size: 13px;
-    color: var(--text-warning);
-  }
-
-  .nav-row { display: flex; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap; }
-
-  button {
-    padding: 8px 16px;
-    border-radius: var(--radius-md);
-    border: 0.5px solid var(--border-md);
-    background: transparent;
-    color: var(--text);
-    font-size: 14px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s;
-  }
-
-  button:hover { background: var(--bg-secondary); }
-  button:disabled { opacity: 0.4; pointer-events: none; }
-
-  .note {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-top: 1rem;
-  }
-
-  .update-date {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    text-align: center;
-    margin-top: 2rem;
-    padding-bottom: 1rem;
-  }
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-secondary); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+.page-wrap { max-width: 680px; margin: 0 auto; }
+.page-header { text-align: center; margin-bottom: 2rem; position: relative; }
+.page-header h1 { font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+.page-header p { font-size: 14px; color: var(--text-secondary); }
+.lang-toggle { position: absolute; top: 0; right: 0; display: flex; border: 0.5px solid var(--border-md); border-radius: var(--radius-md); overflow: hidden; }
+.lang-btn { padding: 5px 12px; font-size: 12px; font-weight: 500; cursor: pointer; background: transparent; border: none; color: var(--text-secondary); font-family: inherit; transition: background 0.15s; }
+.lang-btn.active { background: var(--bg-info); color: var(--text-info); }
+.lang-btn:not(.active):hover { background: var(--bg-secondary); }
+.card { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 1.5rem; margin-bottom: 1rem; }
+.step-indicator { display: flex; gap: 8px; margin-bottom: 2rem; align-items: center; }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; border: 0.5px solid var(--border-md); color: var(--text-secondary); background: transparent; flex-shrink: 0; }
+.step-dot.active { background: var(--bg-info); color: var(--text-info); border-color: var(--border-info); }
+.step-dot.done { background: var(--bg-success); color: var(--text-success); border-color: var(--border-success); }
+.step-line { flex: 1; height: 0.5px; background: var(--border); }
+.step-section { display: none; }
+.step-section.visible { display: block; }
+.q-title { font-size: 18px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+.q-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 1.5rem; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.opt-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px 14px 16px; cursor: pointer; background: var(--bg); text-align: center; transition: border-color 0.15s; }
+.opt-card:hover { border-color: var(--border-md); }
+.opt-card.selected { border: 2px solid var(--border-info); background: var(--bg-info); }
+.opt-card.selected .opt-title, .opt-card.selected .opt-desc, .opt-card.selected .opt-icon { color: var(--text-info); }
+.opt-icon { font-size: 32px; margin-bottom: 10px; color: var(--text-secondary); display: block; }
+.opt-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+.opt-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.scale-block { margin-bottom: 20px; }
+.scale-label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.scale-name { font-size: 13px; color: var(--text-secondary); }
+.scale-val { font-size: 14px; font-weight: 500; color: var(--text); }
+input[type=range] { width: 100%; height: 4px; border-radius: 2px; -webkit-appearance: none; background: var(--border-md); outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--text); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--border-md); }
+.scale-ticks { display: flex; justify-content: space-between; margin-top: 5px; }
+.scale-tick { font-size: 11px; color: var(--text-tertiary); flex: 1; text-align: center; }
+.scale-tick:first-child { text-align: left; }
+.scale-tick:last-child { text-align: right; }
+.seg-track { display: flex; border: 0.5px solid var(--border-md); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-secondary); margin-bottom: 12px; }
+.seg-btn { flex: 1; padding: 12px 8px; cursor: pointer; background: transparent; border: none; border-right: 0.5px solid var(--border); font-size: 13px; color: var(--text-secondary); text-align: center; transition: background 0.15s; font-family: inherit; }
+.seg-btn:last-child { border-right: none; }
+.seg-btn:hover { background: var(--bg); }
+.seg-btn.active { background: var(--bg); color: var(--text); font-weight: 500; }
+.seg-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+.seg-title { display: block; font-size: 13px; font-weight: 500; }
+.seg-sub { display: block; font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.seg-btn.active .seg-sub { color: var(--text-secondary); }
+.quality-desc { min-height: 48px; font-size: 13px; color: var(--text-secondary); padding: 10px 14px; border-radius: var(--radius-md); background: var(--bg-secondary); margin-bottom: 1rem; }
+.metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 1.5rem 0; }
+.metric { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 14px 12px; }
+.metric-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 500; color: var(--text); }
+.rec-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 10px; background: var(--bg); }
+.rec-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.rec-name { font-size: 15px; font-weight: 500; color: var(--text); }
+.rec-provider { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.rec-price { font-size: 18px; font-weight: 500; color: var(--text); }
+.rec-price-label { font-size: 11px; color: var(--text-secondary); }
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 99px; display: inline-block; margin-right: 4px; }
+.badge-best { background: var(--bg-success); color: var(--text-success); }
+.badge-balanced { background: var(--bg-info); color: var(--text-info); }
+.badge-quality { background: var(--bg-warning); color: var(--text-warning); }
+.tip-box { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; margin: 1rem 0; }
+.tip-title { font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--text); }
+.tip-item { font-size: 13px; margin: 4px 0; color: var(--text-secondary); }
+.warn-box { background: var(--bg-warning); border-radius: var(--radius-md); padding: 12px 14px; margin: 1rem 0; font-size: 13px; color: var(--text-warning); }
+.nav-row { display: flex; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap; }
+button { padding: 8px 16px; border-radius: var(--radius-md); border: 0.5px solid var(--border-md); background: transparent; color: var(--text); font-size: 14px; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+button:hover { background: var(--bg-secondary); }
+button:disabled { opacity: 0.4; pointer-events: none; }
+.note { font-size: 12px; color: var(--text-tertiary); margin-top: 1rem; }
+.update-date { font-size: 12px; color: var(--text-tertiary); text-align: center; margin-top: 2rem; padding-bottom: 1rem; }
 </style>
 </head>
 <body>
-
 <div class="page-wrap">
 
   <div class="page-header">
-    <h1>AI 費用估算工具</h1>
-    <p>三個步驟，估算解決你的問題大概要多少錢</p>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+    <h1 id="ph-title"></h1>
+    <p id="ph-sub"></p>
   </div>
 
   <div class="card">
-
     <div class="step-indicator">
       <div class="step-dot active" id="dot1">1</div>
       <div class="step-line"></div>
@@ -416,292 +125,439 @@
 
     <!-- Step 1 -->
     <div class="step-section visible" id="step1">
-      <p class="q-title">你想用 AI 做什麼？</p>
-      <p class="q-sub">選擇最接近你需求的類型</p>
+      <p class="q-title" id="s1-title"></p>
+      <p class="q-sub" id="s1-sub"></p>
       <div class="card-grid">
         <div class="opt-card" onclick="selectTask('extract')" id="t-extract">
           <i class="ti ti-file-search opt-icon"></i>
-          <p class="opt-title">資訊擷取 / 分類</p>
-          <p class="opt-desc">從文件找資料、標記分類、判斷情感</p>
+          <p class="opt-title" id="t-extract-title"></p>
+          <p class="opt-desc" id="t-extract-desc"></p>
         </div>
         <div class="opt-card" onclick="selectTask('summary')" id="t-summary">
           <i class="ti ti-notes opt-icon"></i>
-          <p class="opt-title">摘要 / 改寫</p>
-          <p class="opt-desc">把長文濃縮、換語氣、翻譯改寫</p>
+          <p class="opt-title" id="t-summary-title"></p>
+          <p class="opt-desc" id="t-summary-desc"></p>
         </div>
         <div class="opt-card" onclick="selectTask('chat')" id="t-chat">
           <i class="ti ti-message-circle opt-icon"></i>
-          <p class="opt-title">對話 / 問答</p>
-          <p class="opt-desc">聊天機器人、FAQ、客服回覆</p>
+          <p class="opt-title" id="t-chat-title"></p>
+          <p class="opt-desc" id="t-chat-desc"></p>
         </div>
         <div class="opt-card" onclick="selectTask('generate')" id="t-generate">
           <i class="ti ti-pencil opt-icon"></i>
-          <p class="opt-title">生成 / 寫作</p>
-          <p class="opt-desc">寫文章、寫程式、產生報告</p>
+          <p class="opt-title" id="t-generate-title"></p>
+          <p class="opt-desc" id="t-generate-desc"></p>
         </div>
         <div class="opt-card" onclick="selectTask('analyze')" id="t-analyze">
           <i class="ti ti-chart-bar opt-icon"></i>
-          <p class="opt-title">分析 / 推理</p>
-          <p class="opt-desc">評估方案、財務分析、複雜判斷</p>
+          <p class="opt-title" id="t-analyze-title"></p>
+          <p class="opt-desc" id="t-analyze-desc"></p>
         </div>
       </div>
       <div class="nav-row">
-        <button onclick="goStep(2)" id="btn-step1" disabled>下一步 →</button>
+        <button onclick="goStep(2)" id="btn-step1" disabled id="s1-next"></button>
       </div>
     </div>
 
     <!-- Step 2 -->
     <div class="step-section" id="step2">
-      <p class="q-title">每次使用的資料量大概是？</p>
-      <p class="q-sub">拖拉滑桿調整，不需要精確，大概就好</p>
-
+      <p class="q-title" id="s2-title"></p>
+      <p class="q-sub" id="s2-sub"></p>
       <div class="scale-block">
         <div class="scale-label-row">
-          <span class="scale-name">輸入長度</span>
-          <span class="scale-val" id="lbl-input">400 字（一封電子郵件）</span>
+          <span class="scale-name" id="s2-input-name"></span>
+          <span class="scale-val" id="lbl-input"></span>
         </div>
         <input type="range" min="0" max="4" step="1" value="1" id="sl-input" oninput="updateLabels()">
         <div class="scale-ticks">
-          <span class="scale-tick">幾句話</span>
-          <span class="scale-tick">一篇文章</span>
-          <span class="scale-tick">一本書章節</span>
+          <span class="scale-tick" id="s2-tick-i0"></span>
+          <span class="scale-tick" id="s2-tick-i2"></span>
+          <span class="scale-tick" id="s2-tick-i4"></span>
         </div>
       </div>
-
       <div class="scale-block">
         <div class="scale-label-row">
-          <span class="scale-name">輸出長度</span>
-          <span class="scale-val" id="lbl-output">300 字（一段回覆）</span>
+          <span class="scale-name" id="s2-output-name"></span>
+          <span class="scale-val" id="lbl-output"></span>
         </div>
         <input type="range" min="0" max="4" step="1" value="1" id="sl-output" oninput="updateLabels()">
         <div class="scale-ticks">
-          <span class="scale-tick">幾個字</span>
-          <span class="scale-tick">幾段文字</span>
-          <span class="scale-tick">長篇內容</span>
+          <span class="scale-tick" id="s2-tick-o0"></span>
+          <span class="scale-tick" id="s2-tick-o2"></span>
+          <span class="scale-tick" id="s2-tick-o4"></span>
         </div>
       </div>
-
       <div class="scale-block">
         <div class="scale-label-row">
-          <span class="scale-name">每日使用次數</span>
-          <span class="scale-val" id="lbl-calls">每日約 30 次</span>
+          <span class="scale-name" id="s2-calls-name"></span>
+          <span class="scale-val" id="lbl-calls"></span>
         </div>
         <input type="range" min="0" max="4" step="1" value="1" id="sl-calls" oninput="updateLabels()">
         <div class="scale-ticks">
-          <span class="scale-tick">1–5 次</span>
-          <span class="scale-tick">100–500 次</span>
-          <span class="scale-tick">10,000+ 次</span>
+          <span class="scale-tick" id="s2-tick-c0"></span>
+          <span class="scale-tick" id="s2-tick-c2"></span>
+          <span class="scale-tick" id="s2-tick-c4"></span>
         </div>
       </div>
-
       <div id="chat-warn" class="warn-box" style="display:none">
         <i class="ti ti-alert-triangle" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>
-        對話任務注意：多輪對話的 token 會隨輪數累積，實際費用可能是估算的 3–5 倍。建議定期清空對話或用摘要壓縮。
+        <span id="chat-warn-text"></span>
       </div>
-
       <div class="nav-row">
-        <button onclick="goStep(1)">← 上一步</button>
-        <button onclick="goStep(3)">下一步 →</button>
+        <button onclick="goStep(1)" id="s2-back"></button>
+        <button onclick="goStep(3)" id="s2-next"></button>
       </div>
     </div>
 
     <!-- Step 3 -->
     <div class="step-section" id="step3">
-      <p class="q-title">對品質和費用的優先順序？</p>
-      <p class="q-sub">選擇最符合你情境的一個</p>
-
+      <p class="q-title" id="s3-title"></p>
+      <p class="q-sub" id="s3-sub"></p>
       <div class="seg-track">
         <button class="seg-btn" onclick="selectQuality('cost')" id="q-cost">
           <i class="ti ti-coin seg-icon"></i>
-          <span class="seg-title">省錢優先</span>
-          <span class="seg-sub">夠用就好</span>
+          <span class="seg-title" id="q-cost-title"></span>
+          <span class="seg-sub" id="q-cost-sub"></span>
         </button>
         <button class="seg-btn" onclick="selectQuality('balance')" id="q-balance">
           <i class="ti ti-scale seg-icon"></i>
-          <span class="seg-title">品質平衡</span>
-          <span class="seg-sub">效果與費用兼顧</span>
+          <span class="seg-title" id="q-balance-title"></span>
+          <span class="seg-sub" id="q-balance-sub"></span>
         </button>
         <button class="seg-btn" onclick="selectQuality('quality')" id="q-quality">
           <i class="ti ti-star seg-icon"></i>
-          <span class="seg-title">品質優先</span>
-          <span class="seg-sub">結果要準確</span>
+          <span class="seg-title" id="q-quality-title"></span>
+          <span class="seg-sub" id="q-quality-sub"></span>
         </button>
       </div>
-
-      <div class="quality-desc" id="quality-desc">請選擇上方其中一個選項</div>
-
+      <div class="quality-desc" id="quality-desc"></div>
       <div class="nav-row">
-        <button onclick="goStep(2)">← 上一步</button>
-        <button onclick="showResult()" id="btn-result" disabled>查看費用估算 →</button>
+        <button onclick="goStep(2)" id="s3-back"></button>
+        <button onclick="showResult()" id="btn-result" disabled></button>
       </div>
     </div>
 
-    <!-- Step 4: Result -->
+    <!-- Step 4 -->
     <div class="step-section" id="step4">
-      <p class="q-title">你的費用估算</p>
+      <p class="q-title" id="s4-title"></p>
       <p class="q-sub" id="result-sub"></p>
       <div class="metric-row" id="result-metrics"></div>
-      <p style="font-size:13px;font-weight:500;color:var(--text-secondary);margin:1.5rem 0 8px">推薦模型</p>
+      <p style="font-size:13px;font-weight:500;color:var(--text-secondary);margin:1.5rem 0 8px" id="s4-rec-label"></p>
       <div id="result-recs"></div>
       <div id="result-tips"></div>
-      <p class="note">* 估算基於典型使用情境，實際費用依模型和用量而異。</p>
+      <p class="note" id="s4-note"></p>
       <div class="nav-row">
-        <button onclick="goStep(1)">重新估算</button>
+        <button onclick="goStep(1)" id="s4-restart"></button>
       </div>
     </div>
-
   </div>
 
-  <p class="update-date">定價資料最後更新：2026 年 5 月 ｜ 資料來源：OpenAI、Anthropic、Google 官方定價頁面</p>
-
+  <p class="update-date" id="footer-date"></p>
 </div>
 
 <script>
-const INPUT_SIZES = [
-  {label:'100 字（幾句話）', tokens:100},
-  {label:'400 字（一封電子郵件）', tokens:400},
-  {label:'1,500 字（一篇文章）', tokens:1500},
-  {label:'5,000 字（一份報告）', tokens:5000},
-  {label:'20,000 字（一本書章節）', tokens:20000}
-];
-const OUTPUT_SIZES = [
-  {label:'50 字（幾個字）', tokens:50},
-  {label:'300 字（一段回覆）', tokens:300},
-  {label:'800 字（幾段文字）', tokens:800},
-  {label:'2,000 字（完整文章）', tokens:2000},
-  {label:'6,000 字（長篇內容）', tokens:6000}
-];
-const CALL_SIZES = [
-  {label:'每日約 3 次', count:3},
-  {label:'每日約 30 次', count:30},
-  {label:'每日約 300 次', count:300},
-  {label:'每日約 3,000 次', count:3000},
-  {label:'每日約 30,000 次', count:30000}
-];
-const TASK_CONFIG = {
-  extract:  {inputMult:1.0, outputMult:0.15, warn:false},
-  summary:  {inputMult:1.0, outputMult:0.35, warn:false},
-  chat:     {inputMult:2.5, outputMult:0.5,  warn:true},
-  generate: {inputMult:0.4, outputMult:1.0,  warn:false},
-  analyze:  {inputMult:1.0, outputMult:0.6,  warn:false}
+const T = {
+  zh: {
+    pageTitle: 'AI 費用估算工具',
+    pageSub: '三個步驟，估算解決你的問題大概要多少錢',
+    s1Title: '你想用 AI 做什麼？',
+    s1Sub: '選擇最接近你需求的類型',
+    s1Next: '下一步 →',
+    tasks: {
+      extract: { title: '資訊擷取 / 分類', desc: '從文件找資料、標記分類、判斷情感' },
+      summary: { title: '摘要 / 改寫',     desc: '把長文濃縮、換語氣、翻譯改寫' },
+      chat:    { title: '對話 / 問答',     desc: '聊天機器人、FAQ、客服回覆' },
+      generate:{ title: '生成 / 寫作',     desc: '寫文章、寫程式、產生報告' },
+      analyze: { title: '分析 / 推理',     desc: '評估方案、財務分析、複雜判斷' }
+    },
+    s2Title: '每次使用的資料量大概是？',
+    s2Sub: '拖拉滑桿調整，不需要精確，大概就好',
+    s2InputName: '輸入長度',
+    s2OutputName: '輸出長度',
+    s2CallsName: '每日使用次數',
+    s2Back: '← 上一步', s2Next: '下一步 →',
+    tickI: ['幾句話','一篇文章','一本書章節'],
+    tickO: ['幾個字','幾段文字','長篇內容'],
+    tickC: ['1–5 次','100–500 次','10,000+ 次'],
+    chatWarn: '對話任務注意：多輪對話的 token 會隨輪數累積，實際費用可能是估算的 3–5 倍。建議定期清空對話或用摘要壓縮。',
+    s3Title: '對品質和費用的優先順序？',
+    s3Sub: '選擇最符合你情境的一個',
+    s3Back: '← 上一步',
+    qualityBtns: {
+      cost:    { title: '省錢優先',   sub: '夠用就好' },
+      balance: { title: '品質平衡',   sub: '效果與費用兼顧' },
+      quality: { title: '品質優先',   sub: '結果要準確' }
+    },
+    qualityDesc: {
+      cost:    '適合大量、重複性任務，或對回答品質要求不高的情境。推薦最便宜的模型，每次費用極低。',
+      balance: '適合一般商業用途，希望輸出品質夠好、費用也合理。推薦中階模型，是大多數情境的最佳選擇。',
+      quality: '適合需要深度推理、高準確度的任務，例如法律分析、複雜程式設計。費用較高，但品質最佳。'
+    },
+    qualityDescDefault: '請選擇上方其中一個選項',
+    btnResult: '查看費用估算 →',
+    s4Title: '你的費用估算',
+    s4RecLabel: '推薦模型',
+    s4Restart: '重新估算',
+    s4Note: '* 估算基於典型使用情境，實際費用依模型和用量而異。',
+    metrics: { single: '單次費用（最便宜）', daily: '預估每日費用', monthly: '預估每月費用' },
+    badges: { cost: '最省錢', balance: '品質平衡', quality: '高品質' },
+    perCall: '/ 次', perMonth: '/ 月',
+    tipTitle: '省錢小提示',
+    tips: {
+      chat:     '對話任務：多輪對話 token 會累積，實際費用可能是估算的 3–5 倍。',
+      longInput:'輸入文件很長：使用 Prompt Caching 可節省約 90% 的輸入費用。',
+      highCalls:'呼叫次數多：Batch API 可全面節省 50%（適合非即時任務）。',
+      generate: '生成任務：輸出 token 比輸入貴 4–5 倍，限制輸出長度是最有效的省錢方法。'
+    },
+    taskLabel: { extract:'資訊擷取/分類', summary:'摘要/改寫', chat:'對話/問答', generate:'生成/寫作', analyze:'分析/推理' },
+    resultSubTpl: (task, inTok, outTok, calls) => `任務：${task}，每次約 ${inTok} 輸入 + ${outTok} 輸出 token，${calls}`,
+    footer: '定價資料最後更新：2026 年 5 月 ｜ 資料來源：OpenAI、Anthropic、Google 官方定價頁面',
+    inputSizes: [
+      '100 字（幾句話）','400 字（一封電子郵件）','1,500 字（一篇文章）',
+      '5,000 字（一份報告）','20,000 字（一本書章節）'
+    ],
+    outputSizes: [
+      '50 字（幾個字）','300 字（一段回覆）','800 字（幾段文字）',
+      '2,000 字（完整文章）','6,000 字（長篇內容）'
+    ],
+    callSizes: ['每日約 3 次','每日約 30 次','每日約 300 次','每日約 3,000 次','每日約 30,000 次']
+  },
+  en: {
+    pageTitle: 'AI Cost Estimator',
+    pageSub: 'Estimate what it costs to solve your problem with AI in 3 steps',
+    s1Title: 'What do you want to use AI for?',
+    s1Sub: 'Choose the type that best matches your need',
+    s1Next: 'Next →',
+    tasks: {
+      extract: { title: 'Extract / Classify', desc: 'Pull data from docs, tag & classify, sentiment analysis' },
+      summary: { title: 'Summarize / Rewrite', desc: 'Condense long text, change tone, translate' },
+      chat:    { title: 'Chat / Q&A',          desc: 'Chatbots, FAQ, customer support' },
+      generate:{ title: 'Generate / Write',    desc: 'Write articles, code, or reports' },
+      analyze: { title: 'Analyze / Reason',    desc: 'Evaluate options, financial analysis, complex decisions' }
+    },
+    s2Title: 'How much data do you process each time?',
+    s2Sub: 'Drag the sliders — no need to be exact',
+    s2InputName: 'Input length',
+    s2OutputName: 'Output length',
+    s2CallsName: 'Daily usage',
+    s2Back: '← Back', s2Next: 'Next →',
+    tickI: ['A few sentences','An article','A book chapter'],
+    tickO: ['A few words','A few paragraphs','Long content'],
+    tickC: ['1–5 times','100–500 times','10,000+ times'],
+    chatWarn: 'Chat task note: token count accumulates across turns — real costs may be 3–5× the estimate. Consider periodically clearing context.',
+    s3Title: 'What matters more to you?',
+    s3Sub: 'Pick the one that fits your situation best',
+    s3Back: '← Back',
+    qualityBtns: {
+      cost:    { title: 'Cost first',    sub: 'Good enough' },
+      balance: { title: 'Balanced',      sub: 'Quality & cost' },
+      quality: { title: 'Quality first', sub: 'Accuracy matters' }
+    },
+    qualityDesc: {
+      cost:    'Best for high-volume, repetitive tasks where response quality is not critical. Recommends the cheapest models.',
+      balance: 'Best for general business use — good output quality at a reasonable price. The right choice for most use cases.',
+      quality: 'Best for deep reasoning and high-accuracy tasks like legal analysis or complex coding. Higher cost, best quality.'
+    },
+    qualityDescDefault: 'Select an option above',
+    btnResult: 'See cost estimate →',
+    s4Title: 'Your cost estimate',
+    s4RecLabel: 'Recommended models',
+    s4Restart: 'Start over',
+    s4Note: '* Estimates based on typical usage patterns. Actual costs vary by model and volume.',
+    metrics: { single: 'Cost per call (cheapest)', daily: 'Est. daily cost', monthly: 'Est. monthly cost' },
+    badges: { cost: 'Cheapest', balance: 'Balanced', quality: 'High quality' },
+    perCall: '/ call', perMonth: '/ month',
+    tipTitle: 'Cost-saving tips',
+    tips: {
+      chat:     'Chat tasks: token count grows with each turn — real costs may be 3–5× the estimate.',
+      longInput:'Long inputs: Prompt Caching can cut input costs by ~90%.',
+      highCalls:'High volume: Batch API saves 50% across all models (for non-real-time tasks).',
+      generate: 'Generation tasks: output tokens cost 4–5× more than input — limiting output length is the most effective saving.'
+    },
+    taskLabel: { extract:'Extract/Classify', summary:'Summarize/Rewrite', chat:'Chat/Q&A', generate:'Generate/Write', analyze:'Analyze/Reason' },
+    resultSubTpl: (task, inTok, outTok, calls) => `Task: ${task} · ~${inTok} input + ${outTok} output tokens per call · ${calls}`,
+    footer: 'Pricing last updated: May 2026 · Sources: OpenAI, Anthropic, Google official pricing pages',
+    inputSizes: [
+      '~75 words (a few sentences)','~300 words (an email)','~1,100 words (an article)',
+      '~3,750 words (a report)','~15,000 words (a book chapter)'
+    ],
+    outputSizes: [
+      '~40 words (a few words)','~225 words (a short reply)','~600 words (a few paragraphs)',
+      '~1,500 words (full article)','~4,500 words (long content)'
+    ],
+    callSizes: ['~3/day','~30/day','~300/day','~3,000/day','~30,000/day']
+  }
 };
-const QUALITY_DESC = {
-  cost:    '適合大量、重複性任務，或對回答品質要求不高的情境。推薦最便宜的模型，每次費用極低。',
-  balance: '適合一般商業用途，希望輸出品質夠好、費用也合理。推薦中階模型，是大多數情境的最佳選擇。',
-  quality: '適合需要深度推理、高準確度的任務，例如法律分析、複雜程式設計。費用較高，但品質最佳。'
+
+const INPUT_TOKENS  = [100,400,1500,5000,20000];
+const OUTPUT_TOKENS = [50,300,800,2000,6000];
+const CALL_COUNTS   = [3,30,300,3000,30000];
+const TASK_CONFIG = {
+  extract:  {inputMult:1.0,outputMult:0.15,warn:false},
+  summary:  {inputMult:1.0,outputMult:0.35,warn:false},
+  chat:     {inputMult:2.5,outputMult:0.5, warn:true},
+  generate: {inputMult:0.4,outputMult:1.0, warn:false},
+  analyze:  {inputMult:1.0,outputMult:0.6, warn:false}
 };
 const MODELS = [
-  {name:'Claude Haiku 4.5',     provider:'Anthropic', input:1.00, output:5.00,  tier:'cost'},
-  {name:'Gemini 2.5 Flash-Lite',provider:'Google',    input:0.10, output:0.40,  tier:'cost'},
-  {name:'GPT-4o mini',          provider:'OpenAI',    input:0.15, output:0.60,  tier:'cost'},
-  {name:'Gemini 2.5 Flash',     provider:'Google',    input:0.30, output:2.50,  tier:'balance'},
-  {name:'Claude Sonnet 4.6',    provider:'Anthropic', input:3.00, output:15.00, tier:'balance'},
-  {name:'GPT-4o',               provider:'OpenAI',    input:2.50, output:10.00, tier:'balance'},
-  {name:'Claude Opus 4.7',      provider:'Anthropic', input:5.00, output:25.00, tier:'quality'},
-  {name:'Gemini 3.1 Pro',       provider:'Google',    input:2.00, output:12.00, tier:'quality'},
-  {name:'GPT-4.1',              provider:'OpenAI',    input:2.00, output:8.00,  tier:'quality'},
+  {name:'Claude Haiku 4.5',     provider:'Anthropic',input:1.00, output:5.00,  tier:'cost'},
+  {name:'Gemini 2.5 Flash-Lite',provider:'Google',   input:0.10, output:0.40,  tier:'cost'},
+  {name:'GPT-4o mini',          provider:'OpenAI',   input:0.15, output:0.60,  tier:'cost'},
+  {name:'Gemini 2.5 Flash',     provider:'Google',   input:0.30, output:2.50,  tier:'balance'},
+  {name:'Claude Sonnet 4.6',    provider:'Anthropic',input:3.00, output:15.00, tier:'balance'},
+  {name:'GPT-4o',               provider:'OpenAI',   input:2.50, output:10.00, tier:'balance'},
+  {name:'Claude Opus 4.7',      provider:'Anthropic',input:5.00, output:25.00, tier:'quality'},
+  {name:'Gemini 3.1 Pro',       provider:'Google',   input:2.00, output:12.00, tier:'quality'},
+  {name:'GPT-4.1',              provider:'OpenAI',   input:2.00, output:8.00,  tier:'quality'},
 ];
 
-let selectedTask = null, selectedQuality = null, currentStep = 1;
+let lang = 'zh', selectedTask = null, selectedQuality = null, currentStep = 1;
 
-function selectTask(t) {
-  selectedTask = t;
-  document.querySelectorAll('[id^="t-"]').forEach(el => el.classList.remove('selected'));
-  document.getElementById('t-' + t).classList.add('selected');
+function detectLang() {
+  const bl = navigator.language || navigator.userLanguage || '';
+  return bl.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+}
+
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function renderLang() {
+  const t = T[lang];
+  document.documentElement.lang = lang === 'zh' ? 'zh-TW' : 'en';
+  document.title = t.pageTitle + (lang === 'zh' ? ' / AI Cost Estimator' : ' / AI 費用估算工具');
+  document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  setText('ph-title', t.pageTitle);
+  setText('ph-sub', t.pageSub);
+  setText('s1-title', t.s1Title);
+  setText('s1-sub', t.s1Sub);
+  document.getElementById('btn-step1').textContent = t.s1Next;
+  ['extract','summary','chat','generate','analyze'].forEach(k => {
+    setText('t-'+k+'-title', t.tasks[k].title);
+    setText('t-'+k+'-desc',  t.tasks[k].desc);
+  });
+  setText('s2-title', t.s2Title);
+  setText('s2-sub',   t.s2Sub);
+  setText('s2-input-name',  t.s2InputName);
+  setText('s2-output-name', t.s2OutputName);
+  setText('s2-calls-name',  t.s2CallsName);
+  setText('s2-back', t.s2Back); setText('s2-next', t.s2Next);
+  setText('s2-tick-i0', t.tickI[0]); setText('s2-tick-i2', t.tickI[1]); setText('s2-tick-i4', t.tickI[2]);
+  setText('s2-tick-o0', t.tickO[0]); setText('s2-tick-o2', t.tickO[1]); setText('s2-tick-o4', t.tickO[2]);
+  setText('s2-tick-c0', t.tickC[0]); setText('s2-tick-c2', t.tickC[1]); setText('s2-tick-c4', t.tickC[2]);
+  setText('chat-warn-text', t.chatWarn);
+  setText('s3-title', t.s3Title); setText('s3-sub', t.s3Sub); setText('s3-back', t.s3Back);
+  ['cost','balance','quality'].forEach(k => {
+    setText('q-'+k+'-title', t.qualityBtns[k].title);
+    setText('q-'+k+'-sub',   t.qualityBtns[k].sub);
+  });
+  const qdEl = document.getElementById('quality-desc');
+  qdEl.textContent = selectedQuality ? t.qualityDesc[selectedQuality] : t.qualityDescDefault;
+  document.getElementById('btn-result').textContent = t.btnResult;
+  setText('s4-title',     t.s4Title);
+  setText('s4-rec-label', t.s4RecLabel);
+  setText('s4-restart',   t.s4Restart);
+  setText('s4-note',      t.s4Note);
+  setText('footer-date',  t.footer);
+  updateLabels();
+  if (currentStep === 4) reRenderResult();
+}
+
+function setLang(l) {
+  lang = l;
+  renderLang();
+}
+
+function selectTask(tk) {
+  selectedTask = tk;
+  document.querySelectorAll('[id^="t-"]').forEach(el => {
+    if (el.classList.contains('opt-card')) el.classList.remove('selected');
+  });
+  document.getElementById('t-'+tk).classList.add('selected');
   document.getElementById('btn-step1').disabled = false;
+  if (selectedTask === 'chat') document.getElementById('chat-warn').style.display = 'block';
+  else document.getElementById('chat-warn').style.display = 'none';
 }
 
 function selectQuality(q) {
   selectedQuality = q;
   document.querySelectorAll('.seg-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('q-' + q).classList.add('active');
-  document.getElementById('quality-desc').textContent = QUALITY_DESC[q];
+  document.getElementById('q-'+q).classList.add('active');
+  document.getElementById('quality-desc').textContent = T[lang].qualityDesc[q];
   document.getElementById('btn-result').disabled = false;
 }
 
 function updateLabels() {
+  const t = T[lang];
   const iv = parseInt(document.getElementById('sl-input').value);
   const ov = parseInt(document.getElementById('sl-output').value);
   const cv = parseInt(document.getElementById('sl-calls').value);
-  document.getElementById('lbl-input').textContent = INPUT_SIZES[iv].label;
-  document.getElementById('lbl-output').textContent = OUTPUT_SIZES[ov].label;
-  document.getElementById('lbl-calls').textContent = CALL_SIZES[cv].label;
-  if (selectedTask) {
-    document.getElementById('chat-warn').style.display = (selectedTask === 'chat') ? 'block' : 'none';
-  }
+  setText('lbl-input',  t.inputSizes[iv]);
+  setText('lbl-output', t.outputSizes[ov]);
+  setText('lbl-calls',  t.callSizes[cv]);
 }
 
 function goStep(n) {
-  document.getElementById('step' + currentStep).classList.remove('visible');
-  document.getElementById('step' + n).classList.add('visible');
-  ['dot1','dot2','dot3','dot4'].forEach((id, i) => {
+  document.getElementById('step'+currentStep).classList.remove('visible');
+  document.getElementById('step'+n).classList.add('visible');
+  ['dot1','dot2','dot3','dot4'].forEach((id,i) => {
     const dot = document.getElementById(id);
-    dot.classList.remove('active', 'done');
-    if (i + 1 < n) dot.classList.add('done');
-    else if (i + 1 === n) dot.classList.add('active');
+    dot.classList.remove('active','done');
+    if (i+1 < n) dot.classList.add('done');
+    else if (i+1 === n) dot.classList.add('active');
   });
   currentStep = n;
-  window.scrollTo({top: 0, behavior: 'smooth'});
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function fmt(n) {
-  if (n < 0.001) return '$' + n.toFixed(5);
-  if (n < 0.1)   return '$' + n.toFixed(4);
-  if (n < 10)    return '$' + n.toFixed(3);
-  if (n < 1000)  return '$' + n.toFixed(2);
-  return '$' + Math.round(n).toLocaleString();
+  if (n < 0.001) return '$'+n.toFixed(5);
+  if (n < 0.1)   return '$'+n.toFixed(4);
+  if (n < 10)    return '$'+n.toFixed(3);
+  if (n < 1000)  return '$'+n.toFixed(2);
+  return '$'+Math.round(n).toLocaleString();
 }
 
-function showResult() {
+function buildResult() {
+  const t = T[lang];
   const iv = parseInt(document.getElementById('sl-input').value);
   const ov = parseInt(document.getElementById('sl-output').value);
   const cv = parseInt(document.getElementById('sl-calls').value);
   const cfg = TASK_CONFIG[selectedTask];
-  const inTok  = INPUT_SIZES[iv].tokens  * cfg.inputMult;
-  const outTok = OUTPUT_SIZES[ov].tokens * cfg.outputMult;
-  const dailyCalls = CALL_SIZES[cv].count;
+  const inTok  = INPUT_TOKENS[iv]  * cfg.inputMult;
+  const outTok = OUTPUT_TOKENS[ov] * cfg.outputMult;
+  const dailyCalls = CALL_COUNTS[cv];
 
-  const taskLabels = {extract:'資訊擷取/分類', summary:'摘要/改寫', chat:'對話/問答', generate:'生成/寫作', analyze:'分析/推理'};
   document.getElementById('result-sub').textContent =
-    '任務：' + taskLabels[selectedTask] + '，每次約 ' + Math.round(inTok) + ' 輸入 + ' + Math.round(outTok) + ' 輸出 token，' + CALL_SIZES[cv].label;
+    t.resultSubTpl(t.taskLabel[selectedTask], Math.round(inTok), Math.round(outTok), t.callSizes[cv]);
 
-  const tierPick = selectedQuality === 'cost' ? ['cost'] :
-                   selectedQuality === 'balance' ? ['balance','cost'] : ['quality','balance'];
-  const recs = MODELS.filter(m => tierPick.includes(m.tier)).slice(0, 3);
-  const singleCosts = recs.map(m => ({m, c: (inTok/1e6)*m.input + (outTok/1e6)*m.output}));
-  const cheapest = singleCosts.reduce((a, b) => a.c < b.c ? a : b);
+  const tierPick = selectedQuality==='cost' ? ['cost'] :
+                   selectedQuality==='balance' ? ['balance','cost'] : ['quality','balance'];
+  const recs = MODELS.filter(m => tierPick.includes(m.tier)).slice(0,3);
+  const singleCosts = recs.map(m => ({m, c:(inTok/1e6)*m.input+(outTok/1e6)*m.output}));
+  const cheapest = singleCosts.reduce((a,b) => a.c<b.c?a:b);
 
   document.getElementById('result-metrics').innerHTML = `
-    <div class="metric">
-      <p class="metric-label">單次費用（最便宜）</p>
-      <p class="metric-value">${fmt(cheapest.c)}</p>
-    </div>
-    <div class="metric">
-      <p class="metric-label">預估每日費用</p>
-      <p class="metric-value">${fmt(cheapest.c * dailyCalls)}</p>
-    </div>
-    <div class="metric">
-      <p class="metric-label">預估每月費用</p>
-      <p class="metric-value">${fmt(cheapest.c * dailyCalls * 30)}</p>
-    </div>
+    <div class="metric"><p class="metric-label">${t.metrics.single}</p><p class="metric-value">${fmt(cheapest.c)}</p></div>
+    <div class="metric"><p class="metric-label">${t.metrics.daily}</p><p class="metric-value">${fmt(cheapest.c*dailyCalls)}</p></div>
+    <div class="metric"><p class="metric-label">${t.metrics.monthly}</p><p class="metric-value">${fmt(cheapest.c*dailyCalls*30)}</p></div>
   `;
 
   const badgeLabels = {
-    cost:    '<span class="badge badge-best">最省錢</span>',
-    balance: '<span class="badge badge-balanced">品質平衡</span>',
-    quality: '<span class="badge badge-quality">高品質</span>'
+    cost:    `<span class="badge badge-best">${t.badges.cost}</span>`,
+    balance: `<span class="badge badge-balanced">${t.badges.balance}</span>`,
+    quality: `<span class="badge badge-quality">${t.badges.quality}</span>`
   };
 
-  document.getElementById('result-recs').innerHTML = singleCosts.map(({m, c}) => `
+  document.getElementById('result-recs').innerHTML = singleCosts.map(({m,c}) => `
     <div class="rec-card">
       <div class="rec-top">
-        <div>
-          <p class="rec-name">${m.name}</p>
-          <p class="rec-provider">${m.provider}</p>
-        </div>
+        <div><p class="rec-name">${m.name}</p><p class="rec-provider">${m.provider}</p></div>
         <div style="text-align:right">
-          <p class="rec-price">${fmt(c)}<span class="rec-price-label"> / 次</span></p>
-          <p class="rec-price-label">${fmt(c * dailyCalls * 30)} / 月</p>
+          <p class="rec-price">${fmt(c)}<span class="rec-price-label"> ${t.perCall}</span></p>
+          <p class="rec-price-label">${fmt(c*dailyCalls*30)} ${t.perMonth}</p>
         </div>
       </div>
       <div>${badgeLabels[m.tier]}</div>
@@ -709,21 +565,29 @@ function showResult() {
   `).join('');
 
   const tips = [];
-  if (selectedTask === 'chat')    tips.push('對話任務：多輪對話 token 會累積，實際費用可能是估算的 3–5 倍。');
-  if (iv >= 3)                    tips.push('輸入文件很長：使用 Prompt Caching 可節省約 90% 的輸入費用。');
-  if (cv >= 3)                    tips.push('呼叫次數多：Batch API 可全面節省 50%（適合非即時任務）。');
-  if (selectedTask === 'generate') tips.push('生成任務：輸出 token 比輸入貴 4–5 倍，限制輸出長度是最有效的省錢方法。');
+  if (selectedTask==='chat')     tips.push(t.tips.chat);
+  if (iv>=3)                     tips.push(t.tips.longInput);
+  if (cv>=3)                     tips.push(t.tips.highCalls);
+  if (selectedTask==='generate') tips.push(t.tips.generate);
 
   document.getElementById('result-tips').innerHTML = tips.length ? `
     <div class="tip-box">
-      <p class="tip-title"><i class="ti ti-bulb" style="font-size:16px;vertical-align:-2px;margin-right:4px"></i>省錢小提示</p>
-      ${tips.map(t => '<p class="tip-item">· ' + t + '</p>').join('')}
+      <p class="tip-title"><i class="ti ti-bulb" style="font-size:16px;vertical-align:-2px;margin-right:4px"></i>${t.tipTitle}</p>
+      ${tips.map(tip => '<p class="tip-item">· '+tip+'</p>').join('')}
     </div>` : '';
+}
 
+function showResult() {
+  buildResult();
   goStep(4);
 }
 
-updateLabels();
+function reRenderResult() {
+  if (selectedTask && selectedQuality) buildResult();
+}
+
+lang = detectLang();
+renderLang();
 </script>
 </body>
 </html>
