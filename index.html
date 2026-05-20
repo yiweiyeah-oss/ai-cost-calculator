@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Token 計算機 / AI Token Calculator</title>
+<title>Token 計算機 / Token Calculator</title>
 <meta name="description" content="三步驟估算使用 AI 的費用 / Estimate your AI costs in 3 steps">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
@@ -46,8 +46,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .step-section.visible { display: block; }
 .q-title { font-size: 18px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
 .q-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 1.5rem; }
-.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
-.opt-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px 14px 16px; cursor: pointer; background: var(--bg); text-align: center; transition: border-color 0.15s; }
+.card-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1.5rem; }
+@media (max-width: 600px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 360px) { .card-grid { grid-template-columns: 1fr; } }
+.opt-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 8px 14px; cursor: pointer; background: var(--bg); text-align: center; transition: border-color 0.15s; }
 .opt-card:hover { border-color: var(--border-md); }
 .opt-card.selected { border: 2px solid var(--border-info); background: var(--bg-info); }
 .opt-card.selected .opt-title, .opt-card.selected .opt-desc, .opt-card.selected .opt-icon { color: var(--text-info); }
@@ -258,7 +260,7 @@ button:disabled { opacity: 0.4; pointer-events: none; }
 <script>
 const T = {
   zh: {
-    pageTitle: 'AI 費用估算工具',
+    pageTitle: 'Token 計算機',
     pageSub: '三個步驟，估算解決你的問題大概要多少錢',
     s1Title: '你想用 AI 做什麼？',
     s1Sub: '選擇最接近你需求的類型',
@@ -323,7 +325,7 @@ const T = {
     callSizes: ['每日約 3 次','每日約 30 次','每日約 300 次','每日約 3,000 次','每日約 30,000 次']
   },
   en: {
-    pageTitle: 'AI Cost Estimator',
+    pageTitle: 'Token Calculator',
     pageSub: 'Estimate what it costs to solve your problem with AI in 3 steps',
     s1Title: 'What do you want to use AI for?',
     s1Sub: 'Choose the type that best matches your need',
@@ -426,7 +428,7 @@ function setText(id, text) {
 function renderLang() {
   const t = T[lang];
   document.documentElement.lang = lang === 'zh' ? 'zh-TW' : 'en';
-  document.title = t.pageTitle + (lang === 'zh' ? ' / AI Cost Estimator' : ' / AI 費用估算工具');
+  document.title = lang === 'zh' ? 'Token 計算機 / Token Calculator' : 'Token Calculator / Token 計算機';
   document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   setText('ph-title', t.pageTitle);
